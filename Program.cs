@@ -9,6 +9,14 @@ using MyToursApi.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
+
+// Redis setup
+//builder.Services.AddStackExchangeRedisCache(options =>
+//{
+//    options.Configuration = builder.Configuration.GetConnectionString("RedisConnection");
+//    options.InstanceName = "MyToursApp_";
+//});
+
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));

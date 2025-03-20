@@ -35,7 +35,7 @@ namespace MyToursApi.Controllers
                 return Unauthorized("Invalid credentials.");
             }
 
-            // Создаем JWT-токен
+            // Creating JWT-token
             var tokenHandler = new JwtSecurityTokenHandler();
             var secretKey = _configuration["JwtSettings:SecretKey"];
             var key = Encoding.ASCII.GetBytes(secretKey);

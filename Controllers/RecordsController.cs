@@ -18,7 +18,7 @@ namespace MyToursApi.Controllers
             _context = context;
         }
 
-        // 1) Импорт Excel
+        // 1) Import Excel
         // POST: api/records/import-excel
         [HttpPost("import-excel")]
         public async Task<IActionResult> ImportExcel([FromForm] IFormFile file)
@@ -26,7 +26,7 @@ namespace MyToursApi.Controllers
             if (file == null || file.Length == 0)
                 return BadRequest("No file provided.");
 
-            // 1. Архивируем текущие записи
+            // 1. Archive notes
             var oldRecords = await _context.PassengerRecords.ToListAsync();
             foreach (var rec in oldRecords)
             {
@@ -46,11 +46,11 @@ namespace MyToursApi.Controllers
                 };
                 _context.ArchivePassengerRecords.Add(arch);
             }
-            // 2. Удаляем все записи из PassengerRecords
+            // 2. delete all notes from PassengerRecords
             _context.PassengerRecords.RemoveRange(oldRecords);
             await _context.SaveChangesAsync();
 
-            // 3. Импортируем новые записи из Excel
+            // 3. Import new notes from excel
             using (var stream = file.OpenReadStream())
             using (var workbook = new XLWorkbook(stream))
             {
@@ -58,7 +58,7 @@ namespace MyToursApi.Controllers
                 if (worksheet == null)
                     return BadRequest("No worksheet found in the Excel file.");
 
-                var rows = worksheet.RowsUsed().Skip(1); // Пропускаем заголовки
+                var rows = worksheet.RowsUsed().Skip(1);
 
                 int totalRows = 0;
                 int importedRows = 0;
@@ -129,7 +129,7 @@ namespace MyToursApi.Controllers
             }
         }
 
-        // 2) GET /api/records (без изменений) – получение активных записей
+        // 2) GET /api/records 
         [HttpGet]
         public async Task<IActionResult> GetRecords([FromQuery] string? tourType)
         {
@@ -170,24 +170,23 @@ namespace MyToursApi.Controllers
             return Ok("Check-in removed");
         }
 
-        // 4) Статистика
+        // 4) Stats
         // GET /api/records/stats
         [HttpGet("stats")]
         public IActionResult GetStats()
         {
-            // Предположим, что все записи, у которых TourDate < DateTime.UtcNow, считаем «завершёнными»
-            // И учитываем их как в активной таблице, так и в архиве
+   
 
             DateTime now = DateTime.UtcNow;
 
-            // Из active
+            // From active
             var completedActive = _context.PassengerRecords
                 .Where(r => r.TourDate < now)
-                .AsEnumerable(); // вынесем в память
+                .AsEnumerable(); 
 
-            // Из архива
+            // From archive
             var completedArchive = _context.ArchivePassengerRecords
-                .AsEnumerable(); // все записи в архиве считаем завершёнными
+                .AsEnumerable(); 
 
             var allCompleted = completedActive
                 .Select(a => new
@@ -208,7 +207,6 @@ namespace MyToursApi.Controllers
                 )
                 .ToList();
 
-            // Группируем по (TourDate.Date, TourType) – или просто по TourType, как нужно
             var stats = allCompleted
                 .GroupBy(r => new { Date = r.TourDate.Date, r.TourType })
                 .Select(g => new
@@ -216,7 +214,7 @@ namespace MyToursApi.Controllers
                     TourDate = g.Key.Date,
                     TourType = g.Key.TourType,
                     TotalClients = g.Sum(x => x.Pax),
-                    CheckedInCount = g.Count(x => x.CheckedIn), // кол-во записей с CheckedIn
+                    CheckedInCount = g.Count(x => x.CheckedIn), 
                     NotArrivedCount = g.Sum(x => x.Pax) - g.Count(x => x.CheckedIn)
                 })
                 .OrderBy(x => x.TourDate)
