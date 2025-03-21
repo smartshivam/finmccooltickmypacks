@@ -42,7 +42,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins("https://api.abkillio.xyz")
+        policy.WithOrigins("https://abkillio.xyz")
               .AllowAnyMethod()   
               .AllowAnyHeader();  
     });
