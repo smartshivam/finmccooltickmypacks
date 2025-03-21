@@ -64,7 +64,7 @@ namespace MyToursApi.Controllers
                 int importedRows = 0;
                 List<string> errorMessages = new List<string>();
 
-                var dateFormats = new[] { "dd.MM.yyyy HH:mm:ss", "dd.MM.yyyy" };
+                var dateFormats = new[] { "dd.MM.yyyy HH:mm:ss", "dd.MM.yyyy", "MM/dd/yyyy HH:mm:ss", "MM/dd/yyyy" };
 
                 foreach (var row in rows)
                 {
