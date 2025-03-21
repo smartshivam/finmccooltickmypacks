@@ -25,8 +25,6 @@ namespace MyToursApi.Controllers
 
             var tours = await _context.Tours
                 .Include(t => t.Passengers)
-                .Where(t => t.TourDate >= todayUtc && t.TourDate < tomorrowUtc)
-                .OrderBy(t => t.TourDate)
                 .ToListAsync();
 
             return Ok(tours);
