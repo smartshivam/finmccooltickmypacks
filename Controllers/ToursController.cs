@@ -20,13 +20,10 @@ namespace MyToursApi.Controllers
         [HttpGet("Today")]
         public async Task<IActionResult> GetTodayTours()
         {
-            var todayUtc = DateTime.UtcNow.Date;
-            var tomorrowUtc = todayUtc.AddDays(1);
+            
 
             var tours = await _context.Tours
                 .Include(t => t.Passengers)
-                .Where(t => t.TourDate >= todayUtc && t.TourDate < tomorrowUtc)
-                .OrderBy(t => t.TourDate)
                 .ToListAsync();
 
             return Ok(tours);
