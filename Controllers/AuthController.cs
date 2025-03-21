@@ -1,4 +1,5 @@
-﻿using System.IdentityModel.Tokens.Jwt;
+﻿using System.ComponentModel.DataAnnotations;
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using Microsoft.AspNetCore.Authorization;
@@ -82,7 +83,12 @@ namespace MyToursApi.Controllers
 
     public class LoginModel
     {
+        [Required]
+        [EmailAddress]
         public string Email { get; set; }
+
+        [Required]
+        [StringLength(50, MinimumLength = 6)]
         public string Password { get; set; }
     }
 
