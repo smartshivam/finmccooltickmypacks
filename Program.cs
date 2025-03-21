@@ -20,7 +20,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseMySql(
         builder.Configuration.GetConnectionString("DefaultConnection"),
-        new MySqlServerVersion(new Version(8, 0, 28))
+        new MySqlServerVersion(new Version(8, 0, 28)),
+        mySqlOptions => mySqlOptions.EnableRetryOnFailure()
     ));
 
 builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
