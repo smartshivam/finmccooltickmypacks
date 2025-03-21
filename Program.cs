@@ -24,7 +24,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
         mySqlOptions => mySqlOptions.EnableRetryOnFailure()
     ));
 
-
+builder.WebHost.UseUrls("http://0.0.0.0:80");
 
 
 builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
