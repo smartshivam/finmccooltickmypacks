@@ -24,6 +24,9 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
         mySqlOptions => mySqlOptions.EnableRetryOnFailure()
     ));
 
+
+
+
 builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
 {
     // Password settings
@@ -84,10 +87,11 @@ var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
 {
-    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
-
     var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
     context.Database.Migrate();
+    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
+
+
 
     var adminEmail = builder.Configuration["AdminCredentials:Email"];
     var adminPassword = builder.Configuration["AdminCredentials:Password"];
@@ -104,6 +108,8 @@ using (var scope = app.Services.CreateScope())
         }
     }
 }
+
+
 
 if (app.Environment.IsDevelopment())
 {
