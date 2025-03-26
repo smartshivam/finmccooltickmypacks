@@ -133,6 +133,19 @@ app.UseHttpsRedirection();
 
 // Убедимся, что CORS применяется до других middleware
 app.UseCors("AllowFrontend");
+app.Use(async (context, next) =>
+{
+    context.Response.OnStarting(() =>
+    {
+        Console.WriteLine("Response Headers:");
+        foreach (var header in context.Response.Headers)
+        {
+            Console.WriteLine($"{header.Key}: {header.Value}");
+        }
+        return Task.CompletedTask;
+    });
+    await next();
+});
 app.UseCookiePolicy();
 app.UseAuthentication();
 app.UseAuthorization();
