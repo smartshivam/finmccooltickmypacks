@@ -147,7 +147,7 @@ namespace MyToursApi.Controllers
 
 
 
-        // 3) Check-in/Remove-checkin (без изменений)
+        // 3) Check-in/Remove-checkin 
         [HttpPost("{id}/checkin")]
         public async Task<IActionResult> CheckIn(int id)
         {
@@ -175,58 +175,78 @@ namespace MyToursApi.Controllers
         [HttpGet("stats")]
         public IActionResult GetStats()
         {
-   
-
             DateTime now = DateTime.UtcNow;
 
-            // From active
             var completedActive = _context.PassengerRecords
                 .Where(r => r.TourDate < now)
-                .AsEnumerable(); 
-
-            // From archive
-            var completedArchive = _context.ArchivePassengerRecords
-                .AsEnumerable(); 
-
-            var allCompleted = completedActive
-                .Select(a => new
+                .Select(r => new
                 {
-                    a.TourDate,
-                    a.TourType,
-                    a.Pax,
-                    a.CheckedIn
+                    r.TourDate,
+                    r.TourType,
+                    r.Pax,
+                    r.CheckedIn
                 })
-                .Concat(
-                    completedArchive.Select(a => new
-                    {
-                        a.TourDate,
-                        a.TourType,
-                        a.Pax,
-                        a.CheckedIn
-                    })
-                )
                 .ToList();
 
-            var stats = allCompleted
-                .GroupBy(r => new { Date = r.TourDate.Date, r.TourType })
-                .Select(g => new
+            var completedArchive = _context.ArchivePassengerRecords
+                .Select(r => new
                 {
-                    TourDate = g.Key.Date,
-                    TourType = g.Key.TourType,
-                    TotalClients = g.Sum(x => x.Pax),
-                    CheckedInCount = g.Count(x => x.CheckedIn), 
-                    NotArrivedCount = g.Sum(x => x.Pax) - g.Count(x => x.CheckedIn)
+                    r.TourDate,
+                    r.TourType,
+                    r.Pax,
+                    r.CheckedIn
+                })
+                .ToList();
+
+            var allCompleted = completedActive
+                .Concat(completedArchive)
+                .ToList();
+
+            var tours = _context.Tours
+                .Select(t => new
+                {
+                    DateOnly = t.TourDate.Date, 
+                    t.TourType,
+                    t.GuideName
+                })
+                .ToList();
+
+            // making a dictionary: key = (DateOnly, TourType), value= GuideName          
+            var toursDictionary = tours
+                .GroupBy(x =>  x.TourType)
+                .ToDictionary(
+                    g => g.Key, 
+                    g => g.First().GuideName 
+                );
+
+            var statsResult = allCompleted
+                .GroupBy(r => r.TourType)
+                .Select(g =>
+                {
+                    var key = g.Key; 
+                    string? guideName = null;
+                    if (toursDictionary.TryGetValue(key, out var foundGuide))
+                    {
+                        guideName = foundGuide;
+                    }
+
+                    return new
+                    {
+                        TourDate = g.Min(x => x.TourDate.Date),
+                        TourType = key,
+                        GuideName = guideName,
+                        TotalClients = g.Sum(x => x.Pax),
+                        CheckedInCount = g.Count(x => x.CheckedIn),
+                        NotArrivedCount = g.Sum(x => x.Pax) - g.Count(x => x.CheckedIn)
+                    };
                 })
                 .OrderBy(x => x.TourDate)
                 .ThenBy(x => x.TourType)
                 .ToList();
 
-            return Ok(stats);
-
-
-
-
+            return Ok(statsResult);
         }
+
 
         // POST: api/records/checkin-unique
         [HttpPost("checkin-unique")]
