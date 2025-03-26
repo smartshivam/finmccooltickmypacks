@@ -44,7 +44,8 @@ builder.Services.AddCors(options =>
     {
         policy.WithOrigins("https://abkillio.xyz")
               .AllowAnyMethod()   
-              .AllowAnyHeader();  
+              .AllowAnyHeader()
+              .AllowCredentials();
     });
 });
 
@@ -69,7 +70,21 @@ builder.Services.AddAuthentication(options =>
         ValidateAudience = false,
         ClockSkew = TimeSpan.Zero
     };
+    options.Events = new JwtBearerEvents
+    {
+        OnMessageReceived = context =>
+        {
+            var token = context.Request.Cookies["access_token"];
+            if (!string.IsNullOrEmpty(token))
+            {
+                context.Token = token;
+            }
+            return Task.CompletedTask;
+        }
+    };
 });
+
+
 
 builder.Services.AddControllers(options =>
 {
