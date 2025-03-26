@@ -42,7 +42,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins("https://abkillio.xyz")
+        policy.WithOrigins("http://localhost:3000")
               .AllowAnyMethod()   
               .AllowAnyHeader();  
     });
@@ -87,7 +87,7 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    context.Database.Migrate();
+    //context.Database.Migrate();
     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
 
 
