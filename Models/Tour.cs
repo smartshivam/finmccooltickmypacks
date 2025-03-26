@@ -14,5 +14,8 @@ namespace MyToursApi.Models
         public string? TourName { get; set; }
 
         public ICollection<Passenger>? Passengers { get; set; }
+
+        public string? GuideName { get; set; }
+
     }
 }

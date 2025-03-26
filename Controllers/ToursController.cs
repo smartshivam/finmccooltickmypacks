@@ -20,16 +20,13 @@ namespace MyToursApi.Controllers
         [HttpGet("Today")]
         public async Task<IActionResult> GetTodayTours()
         {
-            
-
             var tours = await _context.Tours
                 .Include(t => t.Passengers)
                 .ToListAsync();
-
             return Ok(tours);
         }
 
-        // GET: api/Tours/5
+        // GET: api/Tours/{id}
         [HttpGet("{id}")]
         public async Task<IActionResult> GetTour(int id)
         {
@@ -38,11 +35,58 @@ namespace MyToursApi.Controllers
                 .FirstOrDefaultAsync(t => t.Id == id);
 
             if (tour == null)
-            {
                 return NotFound();
-            }
 
             return Ok(tour);
+        }
+
+        // PUT: api/Tours/guide?tourType=...
+        [HttpPut("guide")]
+        public async Task<IActionResult> UpdateTourGuide([FromQuery] string tourType, [FromBody] UpdateTourDto dto)
+        {
+            if (string.IsNullOrEmpty(tourType))
+                return BadRequest("tourType is required.");
+
+            var tour = await _context.Tours.FirstOrDefaultAsync(t => t.TourType == tourType);
+            if (tour == null)
+            {
+                tour = new Tour
+                {
+                    TourType = tourType,
+                    TourName = tourType,
+                    TourDate = DateTime.UtcNow, 
+                    GuideName = dto.GuideName
+                };
+                _context.Tours.Add(tour);
+                await _context.SaveChangesAsync();
+                return Ok(tour);
+            }
+
+            tour.GuideName = dto.GuideName;
+            await _context.SaveChangesAsync();
+            return Ok(tour);
+        }
+
+        // GET: api/tours/byType?tourType=Dublin%20-%20Titanic
+        [HttpGet("byType")]
+        public async Task<IActionResult> GetTourByType([FromQuery] string tourType)
+        {
+            if (string.IsNullOrEmpty(tourType))
+                return BadRequest("tourType is required.");
+
+            var tour = await _context.Tours
+                .FirstOrDefaultAsync(t => t.TourType == tourType);
+
+            if (tour == null)
+                return NotFound("Tour not found.");
+
+            return Ok(tour);
+        }
+
+
+        public class UpdateTourDto
+        {
+            public string? GuideName { get; set; }
         }
     }
 }

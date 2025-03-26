@@ -351,6 +351,9 @@ namespace MyToursApi.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
+                    b.Property<string>("GuideName")
+                        .HasColumnType("longtext");
+
                     b.Property<DateTime>("TourDate")
                         .HasColumnType("datetime(6)");
 

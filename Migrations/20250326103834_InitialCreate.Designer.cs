@@ -11,7 +11,7 @@ using MyToursApi.Data;
 namespace MyToursApi.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250321105749_InitialCreate")]
+    [Migration("20250326103834_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -353,6 +353,9 @@ namespace MyToursApi.Migrations
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
+
+                    b.Property<string>("GuideName")
+                        .HasColumnType("longtext");
 
                     b.Property<DateTime>("TourDate")
                         .HasColumnType("datetime(6)");
