@@ -117,7 +117,7 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    context.Database.Migrate();
+   // context.Database.Migrate();
     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
 
 
@@ -146,9 +146,12 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+
+app.UseDeveloperExceptionPage();
 app.UseHttpsRedirection();
 app.UseCors("AllowFrontend");
 app.UseCookiePolicy();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+app.Run();
