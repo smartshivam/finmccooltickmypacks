@@ -26,15 +26,17 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 
 
-builder.Services.AddIdentityCore<IdentityUser>(options => {
+builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
+{
+    // Password settings
     options.Password.RequireDigit = false;
     options.Password.RequiredLength = 6;
     options.Password.RequireLowercase = false;
     options.Password.RequireUppercase = false;
     options.Password.RequireNonAlphanumeric = false;
 })
-.AddRoles<IdentityRole>()
-.AddEntityFrameworkStores<ApplicationDbContext>();
+.AddEntityFrameworkStores<ApplicationDbContext>()
+.AddDefaultTokenProviders();
 
 builder.Services.AddCors(options =>
 {
@@ -46,6 +48,21 @@ builder.Services.AddCors(options =>
               .AllowCredentials();
     });
 });
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    // Если вы используете ту же схему аутентификации
+    options.Cookie.Name = "access_token";
+    options.Cookie.Domain = ".abkillio.xyz";
+    options.Cookie.HttpOnly = true;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always; // эквивалент Secure=true
+    options.Cookie.SameSite = SameSiteMode.None;
+    options.ExpireTimeSpan = TimeSpan.FromDays(7);
+});
+builder.Services.Configure<CookiePolicyOptions>(opts =>
+{
+    opts.MinimumSameSitePolicy = SameSiteMode.None;
+});
+
 
 // Setting JWT
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
@@ -69,17 +86,17 @@ builder.Services.AddAuthentication(options =>
         ClockSkew = TimeSpan.Zero
     };
     options.Events = new JwtBearerEvents
+{
+    OnMessageReceived = context =>
     {
-        OnMessageReceived = context =>
+        var token = context.Request.Cookies["access_token"];
+        if (!string.IsNullOrEmpty(token))
         {
-            var token = context.Request.Cookies["access_token"];
-            if (!string.IsNullOrEmpty(token))
-            {
-                context.Token = token;
-            }
-            return Task.CompletedTask;
+            context.Token = token;
         }
-    };
+        return Task.CompletedTask;
+    }
+};
 });
 
 
@@ -132,6 +149,7 @@ if (app.Environment.IsDevelopment())
 app.UseDeveloperExceptionPage();
 app.UseHttpsRedirection();
 app.UseCors("AllowFrontend");
+app.UseCookiePolicy();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
