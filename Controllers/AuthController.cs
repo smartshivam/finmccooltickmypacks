@@ -107,17 +107,17 @@ namespace MyToursApi.Controllers
             return Ok("Logged out");
         }
 
-        //[HttpGet("Me")]
-        //public IActionResult Me()
-        //{
-        //    var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-        //    if (string.IsNullOrEmpty(userId))
-        //    {
-        //        return Unauthorized();
-        //    }
+        [HttpGet("Me")]
+        public IActionResult Me()
+        {
+            var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized();
+            }
 
-        //    return Ok(new { UserId = userId });
-        //}
+            return Ok(new { UserId = userId });
+        }
 
     }
 

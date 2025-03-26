@@ -9,14 +9,6 @@ using MyToursApi.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
-
-// Redis setup
-//builder.Services.AddStackExchangeRedisCache(options =>
-//{
-//    options.Configuration = builder.Configuration.GetConnectionString("RedisConnection");
-//    options.InstanceName = "MyToursApp_";
-//});
-
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseMySql(
         builder.Configuration.GetConnectionString("DefaultConnection"),
@@ -24,11 +16,8 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
         mySqlOptions => mySqlOptions.EnableRetryOnFailure()
     ));
 
-
-
 builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
 {
-    // Password settings
     options.Password.RequireDigit = false;
     options.Password.RequiredLength = 6;
     options.Password.RequireLowercase = false;
@@ -43,28 +32,28 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowFrontend", policy =>
     {
         policy.WithOrigins("https://abkillio.xyz")
-              .AllowAnyMethod()   
+              .AllowAnyMethod()
               .AllowAnyHeader()
-              .AllowCredentials();
+              .AllowCredentials()
+              .SetIsOriginAllowedToAllowWildcardSubdomains(); // Для поддержки поддоменов, если нужно
     });
 });
+
 builder.Services.ConfigureApplicationCookie(options =>
 {
-    // Если вы используете ту же схему аутентификации
     options.Cookie.Name = "access_token";
     options.Cookie.Domain = ".abkillio.xyz";
     options.Cookie.HttpOnly = true;
-    options.Cookie.SecurePolicy = CookieSecurePolicy.Always; // эквивалент Secure=true
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
     options.Cookie.SameSite = SameSiteMode.None;
     options.ExpireTimeSpan = TimeSpan.FromDays(7);
 });
+
 builder.Services.Configure<CookiePolicyOptions>(opts =>
 {
     opts.MinimumSameSitePolicy = SameSiteMode.None;
 });
 
-
-// Setting JWT
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 var secretKey = jwtSettings["SecretKey"];
 var key = Encoding.ASCII.GetBytes(secretKey);
@@ -76,7 +65,7 @@ builder.Services.AddAuthentication(options =>
 })
 .AddJwtBearer(options =>
 {
-    options.RequireHttpsMetadata = false; 
+    options.RequireHttpsMetadata = false;
     options.TokenValidationParameters = new TokenValidationParameters
     {
         ValidateIssuerSigningKey = true,
@@ -86,24 +75,21 @@ builder.Services.AddAuthentication(options =>
         ClockSkew = TimeSpan.Zero
     };
     options.Events = new JwtBearerEvents
-{
-    OnMessageReceived = context =>
     {
-        var token = context.Request.Cookies["access_token"];
-        if (!string.IsNullOrEmpty(token))
+        OnMessageReceived = context =>
         {
-            context.Token = token;
+            var token = context.Request.Cookies["access_token"];
+            if (!string.IsNullOrEmpty(token))
+            {
+                context.Token = token;
+            }
+            return Task.CompletedTask;
         }
-        return Task.CompletedTask;
-    }
-};
+    };
 });
-
-
 
 builder.Services.AddControllers(options =>
 {
-    // Need to authorize by default
     var policy = new AuthorizationPolicyBuilder()
         .RequireAuthenticatedUser()
         .Build();
@@ -119,8 +105,6 @@ using (var scope = app.Services.CreateScope())
     var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
     context.Database.Migrate();
     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
-
-
 
     var adminEmail = builder.Configuration["AdminCredentials:Email"];
     var adminPassword = builder.Configuration["AdminCredentials:Password"];
@@ -138,20 +122,20 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
-
-
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-
 app.UseDeveloperExceptionPage();
 app.UseHttpsRedirection();
+
+// Убедимся, что CORS применяется до других middleware
 app.UseCors("AllowFrontend");
 app.UseCookiePolicy();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+
 app.Run();
