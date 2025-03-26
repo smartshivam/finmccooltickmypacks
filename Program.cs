@@ -146,11 +146,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseDeveloperExceptionPage();
 app.UseHttpsRedirection();
 app.UseCors("AllowFrontend");
 app.UseCookiePolicy();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
-app.Run();
