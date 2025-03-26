@@ -59,8 +59,9 @@ namespace MyToursApi.Controllers
             var cookieOptions = new CookieOptions
             {
                 HttpOnly = true,
-                Secure = true, // true for HTTPS
-                SameSite = SameSiteMode.Strict,
+                Secure = true,                     
+                SameSite = SameSiteMode.None,      
+                Domain = ".abkillio.xyz",          
                 Expires = DateTime.UtcNow.AddDays(7)
             };
             Response.Cookies.Append("access_token", tokenString, cookieOptions);
