@@ -23,7 +23,7 @@ namespace MyToursApi.Controllers
         }
 
         // POST: api/Auth/Login
-        [Authorize]
+        [AllowAnonymous]
         [HttpPost("Login")]
         public async Task<IActionResult> Login([FromBody] LoginModel model)
         {
@@ -70,7 +70,7 @@ namespace MyToursApi.Controllers
         }
 
         // POST: api/Auth/ChangePassword
-        [Authorize]
+        [AllowAnonymous]
         [HttpPost("ChangePassword")]
         public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordModel model)
         {
