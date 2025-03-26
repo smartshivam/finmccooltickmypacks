@@ -90,6 +90,23 @@ namespace MyToursApi.Controllers
 
             return Ok("Password changed successfully.");
         }
+
+        [HttpPost("Logout")]
+        public IActionResult Logout()
+        {
+            Response.Cookies.Append("access_token", "",
+                new CookieOptions
+                {
+                    HttpOnly = true,
+                    Secure = true,
+                    SameSite = SameSiteMode.None,
+                    Domain = ".abkillio.xyz",    
+                    Expires = DateTime.UtcNow.AddDays(-1)
+                }
+            );
+            return Ok("Logged out");
+        }
+
     }
 
     public class LoginModel
