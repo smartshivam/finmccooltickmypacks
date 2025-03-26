@@ -11,7 +11,7 @@ using MyToursApi.Data;
 namespace MyToursApi.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250326212634_Initial")]
+    [Migration("20250326220050_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
