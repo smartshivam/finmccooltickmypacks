@@ -175,23 +175,9 @@ namespace MyToursApi.Controllers
         [HttpGet("stats")]
         public IActionResult GetStats()
         {
-            // Текущее время, чтобы понять, что «завершённый тур» (completed) – тот, чья дата < now
             DateTime now = DateTime.UtcNow;
 
-            // 1. Собираем данные из PassengerRecords (актуальная таблица)
             var completedActive = _context.PassengerRecords
-                .Where(r => r.TourDate < now)  // только прошедшие
-                .Select(r => new
-                {
-                    r.TourDate,
-                    r.TourType,
-                    r.Pax,
-                    r.CheckedIn
-                })
-                .ToList();
-
-            // 2. Собираем данные из ArchivePassengerRecords (архивная таблица)
-            var completedArchive = _context.ArchivePassengerRecords
                 .Where(r => r.TourDate < now)
                 .Select(r => new
                 {
@@ -202,55 +188,56 @@ namespace MyToursApi.Controllers
                 })
                 .ToList();
 
-            // 3. Объединяем обе коллекции
-            var allCompleted = completedActive.Concat(completedArchive).ToList();
+            var completedArchive = _context.ArchivePassengerRecords
+                .Select(r => new
+                {
+                    r.TourDate,
+                    r.TourType,
+                    r.Pax,
+                    r.CheckedIn
+                })
+                .ToList();
 
-            // 4. Берём список туров, чтобы узнать, есть ли гид на конкретную дату + тип тура
+            var allCompleted = completedActive
+                .Concat(completedArchive)
+                .ToList();
+
             var tours = _context.Tours
-                .Select(t => new {
-                    // Берём только «дату без времени»
-                    DateOnly = t.TourDate.Date,
+                .Select(t => new
+                {
+                    DateOnly = t.TourDate.Date, 
                     t.TourType,
                     t.GuideName
                 })
                 .ToList();
 
-            // 5. Создаём словарь: ключ = (Date, TourType), значение = GuideName
-            //    Если на одну дату + тип есть несколько гида, берём первый
+            // making a dictionary: key = (DateOnly, TourType), value= GuideName          
             var toursDictionary = tours
-                .GroupBy(x => new { x.DateOnly, x.TourType })
+                .GroupBy(x =>  x.TourType)
                 .ToDictionary(
-                    g => g.Key,
-                    g => g.First().GuideName
+                    g => g.Key, 
+                    g => g.First().GuideName 
                 );
 
-            // 6. Группируем пассажирские записи тоже по дате (без времени) и типу
             var statsResult = allCompleted
-                .GroupBy(r => new { Day = r.TourDate.Date, Type = r.TourType })
+                .GroupBy(r => r.TourType)
                 .Select(g =>
                 {
-                    var day = g.Key.Day;
-                    var type = g.Key.Type;
-
-                    // Пытаемся найти гида в словаре
+                    var key = g.Key; 
                     string? guideName = null;
-                    if (toursDictionary.TryGetValue(new { DateOnly = day, TourType = type }, out var foundGuide))
+                    if (toursDictionary.TryGetValue(key, out var foundGuide))
                     {
                         guideName = foundGuide;
                     }
 
-                    var totalClients = g.Sum(x => x.Pax);
-                    var checkedInCount = g.Count(x => x.CheckedIn);
-
                     return new
                     {
-                        // Выводим день как TourDate
-                        TourDate = day,
-                        TourType = type,
+                        TourDate = g.Min(x => x.TourDate.Date),
+                        TourType = key,
                         GuideName = guideName,
-                        TotalClients = totalClients,
-                        CheckedInCount = checkedInCount,
-                        NotArrivedCount = totalClients - checkedInCount
+                        TotalClients = g.Sum(x => x.Pax),
+                        CheckedInCount = g.Count(x => x.CheckedIn),
+                        NotArrivedCount = g.Sum(x => x.Pax) - g.Count(x => x.CheckedIn)
                     };
                 })
                 .OrderBy(x => x.TourDate)
@@ -259,7 +246,6 @@ namespace MyToursApi.Controllers
 
             return Ok(statsResult);
         }
-
 
 
         // POST: api/records/checkin-unique
