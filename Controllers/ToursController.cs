@@ -25,7 +25,7 @@ namespace MyToursApi.Controllers
                 .ToListAsync();
             return Ok(tours);
         }
-
+        
         // GET: api/Tours/{id}
         [HttpGet("{id}")]
         public async Task<IActionResult> GetTour(int id)
@@ -82,6 +82,24 @@ namespace MyToursApi.Controllers
 
             return Ok(tour);
         }
+
+        // GET: api/records/allTours
+        [HttpGet("allTours")]
+        public async Task<IActionResult> GetAllTours()
+        {
+
+            var result = await _context.PassengerRecords
+                .GroupBy(r => r.TourType)
+                .Select(g => new {
+                    TourType = g.Key,
+                    PaxSum = g.Sum(x => x.Pax)
+                })
+                .OrderBy(x => x.TourType)
+                .ToListAsync();
+
+            return Ok(result);
+        }
+
 
 
         public class UpdateTourDto
