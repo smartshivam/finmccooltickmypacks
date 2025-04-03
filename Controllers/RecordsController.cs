@@ -147,14 +147,17 @@ namespace MyToursApi.Controllers
 
 
 
-        // 3) Check-in/Remove-checkin 
         [HttpPost("{id}/checkin")]
         public async Task<IActionResult> CheckIn(int id)
         {
             var record = await _context.PassengerRecords.FindAsync(id);
             if (record == null) return NotFound();
 
+            var guideName = User.Identity?.Name ?? "Unknown";
+
             record.CheckedIn = true;
+            record.CheckedInBy = guideName;  
+
             await _context.SaveChangesAsync();
             return Ok("Checked in");
         }
@@ -166,6 +169,8 @@ namespace MyToursApi.Controllers
             if (record == null) return NotFound();
 
             record.CheckedIn = false;
+            record.CheckedInBy = null; 
+
             await _context.SaveChangesAsync();
             return Ok("Check-in removed");
         }

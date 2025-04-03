@@ -35,7 +35,7 @@ builder.Services.AddCors(options =>
               .AllowAnyMethod()
               .AllowAnyHeader()
               .AllowCredentials()
-              .SetIsOriginAllowedToAllowWildcardSubdomains(); 
+              .SetIsOriginAllowedToAllowWildcardSubdomains();
     });
 });
 
@@ -48,6 +48,10 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.Cookie.SameSite = SameSiteMode.None;
     options.ExpireTimeSpan = TimeSpan.FromDays(7);
 });
+
+
+
+
 
 builder.Services.Configure<CookiePolicyOptions>(opts =>
 {
@@ -103,7 +107,7 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-   // context.Database.Migrate();
+    // context.Database.Migrate();
     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
 
     var adminEmail = builder.Configuration["AdminCredentials:Email"];

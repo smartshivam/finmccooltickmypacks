@@ -46,7 +46,8 @@ namespace MyToursApi.Controllers
                 Subject = new ClaimsIdentity(new Claim[]
                 {
                     new Claim(ClaimTypes.NameIdentifier, user.Id),
-                    new Claim(ClaimTypes.Email, user.Email)
+                    new Claim(ClaimTypes.Email, user.Email),
+                    new Claim(ClaimTypes.Name, user.UserName ?? user.Email)
                 }),
                 Expires = DateTime.UtcNow.AddDays(7),
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
@@ -61,7 +62,7 @@ namespace MyToursApi.Controllers
                 HttpOnly = true,
                 Secure = true,                     
                 SameSite = SameSiteMode.None,      
-                Domain = ".abkillio.xyz",          
+                //Domain = ".abkillio.xyz",          
                 Expires = DateTime.UtcNow.AddDays(7)
             };
             Response.Cookies.Append("access_token", tokenString, cookieOptions);
@@ -100,7 +101,7 @@ namespace MyToursApi.Controllers
                     HttpOnly = true,
                     Secure = true,
                     SameSite = SameSiteMode.None,
-                    Domain = ".abkillio.xyz",    
+                    //Domain = ".abkillio.xyz",    
                     Expires = DateTime.UtcNow.AddDays(-1)
                 }
             );

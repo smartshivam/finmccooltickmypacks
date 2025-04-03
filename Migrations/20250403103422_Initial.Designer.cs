@@ -11,7 +11,7 @@ using MyToursApi.Data;
 namespace MyToursApi.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250326220050_Initial")]
+    [Migration("20250403103422_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -315,6 +315,9 @@ namespace MyToursApi.Migrations
 
                     b.Property<bool>("CheckedIn")
                         .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("CheckedInBy")
+                        .HasColumnType("longtext");
 
                     b.Property<string>("EmailAddress")
                         .HasColumnType("longtext");

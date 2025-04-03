@@ -313,6 +313,9 @@ namespace MyToursApi.Migrations
                     b.Property<bool>("CheckedIn")
                         .HasColumnType("tinyint(1)");
 
+                    b.Property<string>("CheckedInBy")
+                        .HasColumnType("longtext");
+
                     b.Property<string>("EmailAddress")
                         .HasColumnType("longtext");
 

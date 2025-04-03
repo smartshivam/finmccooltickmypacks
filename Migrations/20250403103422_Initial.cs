@@ -122,7 +122,9 @@ namespace MyToursApi.Migrations
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     PhoneNumber = table.Column<string>(type: "longtext", nullable: true)
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    CheckedIn = table.Column<bool>(type: "tinyint(1)", nullable: false)
+                    CheckedIn = table.Column<bool>(type: "tinyint(1)", nullable: false),
+                    CheckedInBy = table.Column<string>(type: "longtext", nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4")
                 },
                 constraints: table =>
                 {

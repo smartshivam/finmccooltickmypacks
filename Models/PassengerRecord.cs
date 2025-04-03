@@ -20,5 +20,8 @@ namespace MyToursApi.Models
         public string? UniqueReference { get; set; }
         public string? PhoneNumber { get; set; }
         public bool CheckedIn { get; set; }
+
+        public string? CheckedInBy { get; set; }
+
     }
 }
