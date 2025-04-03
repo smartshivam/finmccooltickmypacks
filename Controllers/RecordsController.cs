@@ -260,15 +260,17 @@ namespace MyToursApi.Controllers
             if (string.IsNullOrEmpty(model.UniqueRef))
                 return BadRequest("UniqueRef is required.");
 
-            // Find passenger by his UniqueReference 
             var passenger = await _context.PassengerRecords
                 .FirstOrDefaultAsync(p => p.UniqueReference == model.UniqueRef);
 
             if (passenger == null)
                 return NotFound("Passenger not found.");
 
-            
+            string guideName = User.Identity?.Name ?? "Unknown";
+
             passenger.CheckedIn = true;
+            passenger.CheckedInBy = guideName;
+
             await _context.SaveChangesAsync();
 
             return Ok(new
@@ -277,6 +279,7 @@ namespace MyToursApi.Controllers
                 Passenger = passenger
             });
         }
+
 
         public class UniqueRefModel
         {
