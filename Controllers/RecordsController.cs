@@ -201,6 +201,25 @@ namespace MyToursApi.Controllers
             return Ok(statsResult);
         }
 
+        [HttpPut("{id}/pax")]
+        public async Task<IActionResult> UpdatePax(int id, [FromBody] PaxModel model)
+        {
+            var record = await _context.PassengerRecords.FindAsync(id);
+            if (record == null)
+                return NotFound("Record not found.");
+
+            // Update Pax
+            record.Pax = model.Pax;
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Pax updated" });
+        }
+
+        public class PaxModel
+        {
+            public int Pax { get; set; }
+        }
+
 
         // POST: api/records/checkin-unique
         [HttpPost("checkin-unique")]
