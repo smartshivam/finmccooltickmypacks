@@ -26,31 +26,11 @@ namespace MyToursApi.Controllers
             if (file == null || file.Length == 0)
                 return BadRequest("No file provided.");
 
-            // 1. Archive notes
             var oldRecords = await _context.PassengerRecords.ToListAsync();
-            foreach (var rec in oldRecords)
-            {
-                var arch = new ArchivePassengerRecord
-                {
-                    ArchivedAt = DateTime.UtcNow,
-                    TourDate = rec.TourDate,
-                    TourType = rec.TourType,
-                    Seats = rec.Seats,
-                    Surname = rec.Surname,
-                    FirstName = rec.FirstName,
-                    Pax = rec.Pax,
-                    EmailAddress = rec.EmailAddress,
-                    UniqueReference = rec.UniqueReference,
-                    PhoneNumber = rec.PhoneNumber,
-                    CheckedIn = rec.CheckedIn
-                };
-                _context.ArchivePassengerRecords.Add(arch);
-            }
-            // 2. delete all notes from PassengerRecords
             _context.PassengerRecords.RemoveRange(oldRecords);
             await _context.SaveChangesAsync();
 
-            // 3. Import new notes from excel
+            // Импорт новых записей из Excel
             using (var stream = file.OpenReadStream())
             using (var workbook = new XLWorkbook(stream))
             {
@@ -105,7 +85,8 @@ namespace MyToursApi.Controllers
                             EmailAddress = emailAddress,
                             UniqueReference = uniqueReference,
                             PhoneNumber = phoneNumber,
-                            CheckedIn = false
+                            CheckedIn = false,
+                            CheckedInBy = null
                         };
                         _context.PassengerRecords.Add(record);
                         importedRows++;
@@ -144,9 +125,6 @@ namespace MyToursApi.Controllers
             return Ok(records);
         }
 
-
-
-
         [HttpPost("{id}/checkin")]
         public async Task<IActionResult> CheckIn(int id)
         {
@@ -156,7 +134,7 @@ namespace MyToursApi.Controllers
             var guideName = User.Identity?.Name ?? "Unknown";
 
             record.CheckedIn = true;
-            record.CheckedInBy = guideName;  
+            record.CheckedInBy = guideName;
 
             await _context.SaveChangesAsync();
             return Ok("Checked in");
@@ -169,80 +147,49 @@ namespace MyToursApi.Controllers
             if (record == null) return NotFound();
 
             record.CheckedIn = false;
-            record.CheckedInBy = null; 
+            record.CheckedInBy = null;
 
             await _context.SaveChangesAsync();
             return Ok("Check-in removed");
         }
 
-        // 4) Stats
-        // GET /api/records/stats
+        // 4) Stats 
+        // GET: api/records/stats
         [HttpGet("stats")]
-        public IActionResult GetStats()
+        public async Task<IActionResult> GetStats()
         {
             DateTime now = DateTime.UtcNow;
 
-            var completedActive = _context.PassengerRecords
-                .Where(r => r.TourDate < now)
-                .Select(r => new
-                {
-                    r.TourDate,
-                    r.TourType,
-                    r.Pax,
-                    r.CheckedIn
-                })
-                .ToList();
+            var records = await _context.PassengerRecords.Where(r => r.TourDate < now).ToListAsync();
 
-            var completedArchive = _context.ArchivePassengerRecords
-                .Select(r => new
-                {
-                    r.TourDate,
-                    r.TourType,
-                    r.Pax,
-                    r.CheckedIn
-                })
-                .ToList();
-
-            var allCompleted = completedActive
-                .Concat(completedArchive)
-                .ToList();
-
-            var tours = _context.Tours
-                .Select(t => new
-                {
-                    DateOnly = t.TourDate.Date, 
-                    t.TourType,
-                    t.GuideName
-                })
-                .ToList();
-
-            // making a dictionary: key = (DateOnly, TourType), value= GuideName          
-            var toursDictionary = tours
-                .GroupBy(x =>  x.TourType)
-                .ToDictionary(
-                    g => g.Key, 
-                    g => g.First().GuideName 
-                );
-
-            var statsResult = allCompleted
+            var statsResult = records
                 .GroupBy(r => r.TourType)
                 .Select(g =>
                 {
-                    var key = g.Key; 
-                    string? guideName = null;
-                    if (toursDictionary.TryGetValue(key, out var foundGuide))
-                    {
-                        guideName = foundGuide;
-                    }
+                    var tourType = g.Key;
+                    var totalClients = g.Sum(r => r.Pax);
+                    var checkedInCount = g.Count(r => r.CheckedIn);
+                    var notArrivedCount = totalClients - checkedInCount;
+                    var tourDate = g.Min(r => r.TourDate.Date);
+
+                    var guidesStats = g.GroupBy(r => r.CheckedInBy ?? "Not Checked In")
+                                       .Select(gg => new
+                                       {
+                                           GuideName = gg.Key,
+                                           Clients = gg.Sum(r => r.Pax),
+                                           CheckedInCount = gg.Count(r => r.CheckedIn),
+                                           NotArrivedCount = gg.Sum(r => r.Pax) - gg.Count(r => r.CheckedIn)
+                                       })
+                                       .ToList();
 
                     return new
                     {
-                        TourDate = g.Min(x => x.TourDate.Date),
-                        TourType = key,
-                        GuideName = guideName,
-                        TotalClients = g.Sum(x => x.Pax),
-                        CheckedInCount = g.Count(x => x.CheckedIn),
-                        NotArrivedCount = g.Sum(x => x.Pax) - g.Count(x => x.CheckedIn)
+                        TourDate = tourDate,
+                        TourType = tourType,
+                        TotalClients = totalClients,
+                        CheckedInCount = checkedInCount,
+                        NotArrivedCount = notArrivedCount,
+                        Guides = guidesStats
                     };
                 })
                 .OrderBy(x => x.TourDate)
@@ -251,7 +198,6 @@ namespace MyToursApi.Controllers
 
             return Ok(statsResult);
         }
-
 
         // POST: api/records/checkin-unique
         [HttpPost("checkin-unique")]
@@ -280,11 +226,9 @@ namespace MyToursApi.Controllers
             });
         }
 
-
         public class UniqueRefModel
         {
             public string UniqueRef { get; set; }
         }
-
     }
 }
