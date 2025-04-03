@@ -156,29 +156,31 @@ namespace MyToursApi.Controllers
         // 4) Stats 
         // GET: api/records/stats
         [HttpGet("stats")]
-        public async Task<IActionResult> GetStats()
+        public IActionResult GetStats()
         {
             DateTime now = DateTime.UtcNow;
 
-            var records = await _context.PassengerRecords.Where(r => r.TourDate < now).ToListAsync();
+            var records = _context.PassengerRecords
+                .Where(r => r.TourDate < now)
+                .ToList();
 
             var statsResult = records
                 .GroupBy(r => r.TourType)
                 .Select(g =>
                 {
-                    var tourType = g.Key;
-                    var totalClients = g.Sum(r => r.Pax);
-                    var checkedInCount = g.Count(r => r.CheckedIn);
+                    var tourType = g.Key ?? "Unknown";
+                    var totalClients = g.Sum(x => x.Pax);
+                    var checkedInCount = g.Count(x => x.CheckedIn);
                     var notArrivedCount = totalClients - checkedInCount;
-                    var tourDate = g.Min(r => r.TourDate.Date);
+                    var tourDate = g.Min(x => x.TourDate.Date);
 
-                    var guidesStats = g.GroupBy(r => r.CheckedInBy ?? "Not Checked In")
+                    var guidesStats = g.GroupBy(x => x.CheckedInBy ?? "None")
                                        .Select(gg => new
                                        {
                                            GuideName = gg.Key,
-                                           Clients = gg.Sum(r => r.Pax),
-                                           CheckedInCount = gg.Count(r => r.CheckedIn),
-                                           NotArrivedCount = gg.Sum(r => r.Pax) - gg.Count(r => r.CheckedIn)
+                                           Clients = gg.Sum(x => x.Pax),
+                                           CheckedInCount = gg.Count(x => x.CheckedIn),
+                                           NotArrivedCount = gg.Sum(x => x.Pax) - gg.Count(x => x.CheckedIn)
                                        })
                                        .ToList();
 
@@ -198,6 +200,7 @@ namespace MyToursApi.Controllers
 
             return Ok(statsResult);
         }
+
 
         // POST: api/records/checkin-unique
         [HttpPost("checkin-unique")]
