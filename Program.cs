@@ -31,7 +31,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins("https://abkillio.xyz", "https://www.abkillio.xyz")
+        policy.WithOrigins("https://abkillio.xyz")
               .AllowAnyMethod()
               .AllowAnyHeader()
               .AllowCredentials();
