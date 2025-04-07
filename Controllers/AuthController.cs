@@ -62,7 +62,7 @@ namespace MyToursApi.Controllers
                 HttpOnly = true,
                 Secure = true,                     
                 SameSite = SameSiteMode.None,      
-                Domain = ".abkillio.xyz",          
+                //Domain = ".abkillio.xyz",          
                 Expires = DateTime.UtcNow.AddDays(7)
             };
             Response.Cookies.Append("access_token", tokenString, cookieOptions);
@@ -101,7 +101,7 @@ namespace MyToursApi.Controllers
                     HttpOnly = true,
                     Secure = true,
                     SameSite = SameSiteMode.None,
-                    Domain = ".abkillio.xyz",    
+                    //Domain = ".abkillio.xyz",    
                     Expires = DateTime.UtcNow.AddDays(-1)
                 }
             );
@@ -109,7 +109,7 @@ namespace MyToursApi.Controllers
         }
 
         [HttpGet("Me")]
-        public IActionResult Me()
+        public async Task<IActionResult> Me()
         {
             var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrEmpty(userId))
@@ -117,8 +117,18 @@ namespace MyToursApi.Controllers
                 return Unauthorized();
             }
 
-            return Ok(new { UserId = userId });
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+                return Unauthorized();
+
+            return Ok(new
+            {
+                UserId = userId,
+                UserName = user.UserName,
+                Email = user.Email
+            });
         }
+
 
     }
 
