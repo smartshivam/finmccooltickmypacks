@@ -9,6 +9,7 @@ using MyToursApi.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
+
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseMySql(
         builder.Configuration.GetConnectionString("DefaultConnection"),
@@ -16,6 +17,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
         mySqlOptions => mySqlOptions.EnableRetryOnFailure()
     ));
 
+//  Identity
 builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
 {
     options.Password.RequireDigit = false;
@@ -27,6 +29,7 @@ builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
 .AddEntityFrameworkStores<ApplicationDbContext>()
 .AddDefaultTokenProviders();
 
+// Настройка CORS для фронтенда
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
@@ -35,29 +38,26 @@ builder.Services.AddCors(options =>
               .AllowAnyMethod()
               .AllowAnyHeader()
               .AllowCredentials();
-              //.SetIsOriginAllowedToAllowWildcardSubdomains();
     });
 });
 
+//  cookies
 builder.Services.ConfigureApplicationCookie(options =>
 {
     options.Cookie.Name = "access_token";
-    //options.Cookie.Domain = ".abkillio.xyz";
+    // options.Cookie.Domain = ".abkillio.xyz";
     options.Cookie.HttpOnly = true;
     options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
     options.Cookie.SameSite = SameSiteMode.None;
     options.ExpireTimeSpan = TimeSpan.FromDays(7);
 });
 
-
-
-
-
 builder.Services.Configure<CookiePolicyOptions>(opts =>
 {
     opts.MinimumSameSitePolicy = SameSiteMode.None;
 });
 
+//  JWT
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 var secretKey = jwtSettings["SecretKey"];
 var key = Encoding.ASCII.GetBytes(secretKey);
@@ -69,7 +69,7 @@ builder.Services.AddAuthentication(options =>
 })
 .AddJwtBearer(options =>
 {
-    options.RequireHttpsMetadata = false;
+    options.RequireHttpsMetadata = false; 
     options.TokenValidationParameters = new TokenValidationParameters
     {
         ValidateIssuerSigningKey = true,
@@ -108,20 +108,44 @@ using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
     context.Database.Migrate();
+
     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
+    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+
+    const string adminRole = "Admin";
+    if (!await roleManager.RoleExistsAsync(adminRole))
+    {
+        var roleResult = await roleManager.CreateAsync(new IdentityRole(adminRole));
+        if (!roleResult.Succeeded)
+        {
+            var errors = string.Join(", ", roleResult.Errors.Select(e => e.Description));
+            throw new Exception("Failed to create admin role: " + errors);
+        }
+    }
 
     var adminEmail = builder.Configuration["AdminCredentials:Email"];
     var adminPassword = builder.Configuration["AdminCredentials:Password"];
 
-    var user = await userManager.FindByEmailAsync(adminEmail);
-    if (user == null)
+    var adminUser = await userManager.FindByEmailAsync(adminEmail);
+    if (adminUser == null)
     {
-        user = new IdentityUser { UserName = adminEmail, Email = adminEmail, EmailConfirmed = true };
-        var result = await userManager.CreateAsync(user, adminPassword);
+        adminUser = new IdentityUser { UserName = adminEmail, Email = adminEmail, EmailConfirmed = true };
+        var result = await userManager.CreateAsync(adminUser, adminPassword);
         if (!result.Succeeded)
         {
             var errors = string.Join(", ", result.Errors.Select(e => e.Description));
             throw new Exception("Failed to create admin user: " + errors);
+        }
+    }
+
+    // Если администратор не состоит в роли, добавляем его
+    if (!await userManager.IsInRoleAsync(adminUser, adminRole))
+    {
+        var addToRoleResult = await userManager.AddToRoleAsync(adminUser, adminRole);
+        if (!addToRoleResult.Succeeded)
+        {
+            var errors = string.Join(", ", addToRoleResult.Errors.Select(e => e.Description));
+            throw new Exception("Failed to add admin user to role: " + errors);
         }
     }
 }

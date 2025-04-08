@@ -111,23 +111,24 @@ namespace MyToursApi.Controllers
         [HttpGet("Me")]
         public async Task<IActionResult> Me()
         {
-            var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userId))
-            {
-                return Unauthorized();
-            }
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId)) return Unauthorized();
 
             var user = await _userManager.FindByIdAsync(userId);
-            if (user == null)
-                return Unauthorized();
+            if (user == null) return NotFound("User not found.");
+
+            var roles = await _userManager.GetRolesAsync(user);
+            bool isAdmin = roles.Contains("Admin"); 
 
             return Ok(new
             {
-                UserId = userId,
-                UserName = user.UserName,
-                Email = user.Email
+                UserId = user.Id,
+                Email = user.Email,
+                IsAdmin = isAdmin
             });
         }
+
+
 
 
     }
