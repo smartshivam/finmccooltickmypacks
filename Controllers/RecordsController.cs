@@ -30,7 +30,6 @@ namespace MyToursApi.Controllers
             _context.PassengerRecords.RemoveRange(oldRecords);
             await _context.SaveChangesAsync();
 
-            // Импорт новых записей из Excel
             using (var stream = file.OpenReadStream())
             using (var workbook = new XLWorkbook(stream))
             {
