@@ -234,6 +234,13 @@ namespace MyToursApi.Controllers
             if (passenger == null)
                 return NotFound("Passenger not found.");
 
+            if (!string.Equals(passenger.TourType, model.TourType, StringComparison.OrdinalIgnoreCase))
+            {
+                var msg = $"This passenger belongs to a different tour: {passenger.TourType}.\n" +
+                          $"Name: {passenger.FirstName} {passenger.Surname}";
+                return BadRequest(msg);
+            }
+
             string guideName = User.Identity?.Name ?? "Unknown";
 
             passenger.CheckedIn = true;
@@ -251,6 +258,9 @@ namespace MyToursApi.Controllers
         public class UniqueRefModel
         {
             public string UniqueRef { get; set; }
+            public string TourType { get; set; } 
         }
+
+
     }
 }
