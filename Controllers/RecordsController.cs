@@ -214,10 +214,7 @@ namespace MyToursApi.Controllers
             return Ok(new { message = "Pax updated" });
         }
 
-        public class PaxModel
-        {
-            public int Pax { get; set; }
-        }
+
 
 
         // POST: api/records/checkin-unique
@@ -254,11 +251,7 @@ namespace MyToursApi.Controllers
             });
         }
 
-        public class UniqueRefModel
-        {
-            public string UniqueRef { get; set; }
-            public string TourType { get; set; } 
-        }
+
 
 
         // GET: api/records/download-today
@@ -323,6 +316,61 @@ namespace MyToursApi.Controllers
                     return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
                 }
             }
+        }
+
+        // POST: api/records/create
+        [HttpPost("create")]
+        public async Task<IActionResult> CreatePassenger([FromBody] CreatePassengerDto dto)
+        {
+            if (string.IsNullOrWhiteSpace(dto.TourType))
+                return BadRequest("TourType is required.");
+
+            // creating new passenger record
+            var newRecord = new PassengerRecord
+            {
+                TourDate = dto.TourDate,
+                TourType = dto.TourType,
+                Surname = dto.Surname,
+                FirstName = dto.FirstName,
+                Pax = dto.Pax,
+                Seats = dto.Seats,
+                EmailAddress = dto.EmailAddress,
+                UniqueReference = dto.UniqueReference,
+                PhoneNumber = dto.PhoneNumber,
+                CheckedIn = false,
+                CheckedInBy = null
+            };
+
+            _context.PassengerRecords.Add(newRecord);
+            await _context.SaveChangesAsync();
+
+            return Ok(new
+            {
+                Message = "New passenger created successfully.",
+                PassengerId = newRecord.Id
+            });
+        }
+        public class CreatePassengerDto
+        {
+            public DateTime TourDate { get; set; }
+            public string TourType { get; set; }
+            public string Surname { get; set; }
+            public string FirstName { get; set; }
+            public int Pax { get; set; }
+            public string? Seats { get; set; }
+            public string? EmailAddress { get; set; }
+            public string? UniqueReference { get; set; }
+            public string? PhoneNumber { get; set; }
+        }
+        public class UniqueRefModel
+        {
+            public string UniqueRef { get; set; }
+            public string TourType { get; set; }
+        }
+
+        public class PaxModel
+        {
+            public int Pax { get; set; }
         }
 
 
