@@ -261,7 +261,6 @@ namespace MyToursApi.Controllers
             DateTime today = DateTime.UtcNow.Date;
 
             var records = await _context.PassengerRecords
-                .Where(r => EF.Property<DateTime>(r, "TourDate").Date == today)
                 .OrderBy(r => r.TourType)
                 .ThenBy(r => r.TourDate)
                 .ToListAsync();
