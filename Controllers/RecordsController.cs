@@ -349,6 +349,22 @@ namespace MyToursApi.Controllers
                 PassengerId = newRecord.Id
             });
         }
+
+        // POST: api/records/remove
+        [HttpPost("remove")]
+        public async Task<IActionResult> RemovePassenger(int id)
+        {
+            var record = await _context.PassengerRecords.FindAsync(id);
+
+            _context.PassengerRecords.Remove(record);
+            await _context.SaveChangesAsync();
+
+            return Ok(new
+            {
+                Message = "New passenger removed successfully.",
+             
+            });
+        }
         public class CreatePassengerDto
         {
             public DateTime TourDate { get; set; }
