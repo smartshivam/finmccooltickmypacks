@@ -34,7 +34,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins("https://abkillio.xyz")
+        policy.WithOrigins("http://localhost:3000")
               .AllowAnyMethod()
               .AllowAnyHeader()
               .AllowCredentials();
@@ -45,7 +45,7 @@ builder.Services.AddCors(options =>
 builder.Services.ConfigureApplicationCookie(options =>
 {
     options.Cookie.Name = "access_token";
-    options.Cookie.Domain = ".abkillio.xyz";
+    //options.Cookie.Domain = ".abkillio.xyz";
     options.Cookie.HttpOnly = true;
     options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
     options.Cookie.SameSite = SameSiteMode.None;

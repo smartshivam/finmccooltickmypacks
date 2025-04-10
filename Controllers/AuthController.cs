@@ -62,7 +62,7 @@ namespace MyToursApi.Controllers
                 HttpOnly = true,
                 Secure = true,                     
                 SameSite = SameSiteMode.None,      
-                Domain = ".abkillio.xyz",          
+                //Domain = ".abkillio.xyz",          
                 Expires = DateTime.UtcNow.AddDays(7)
             };
             Response.Cookies.Append("access_token", tokenString, cookieOptions);
@@ -101,7 +101,7 @@ namespace MyToursApi.Controllers
                     HttpOnly = true,
                     Secure = true,
                     SameSite = SameSiteMode.None,
-                    Domain = ".abkillio.xyz",    
+                    //Domain = ".abkillio.xyz",    
                     Expires = DateTime.UtcNow.AddDays(-1)
                 }
             );
@@ -118,15 +118,17 @@ namespace MyToursApi.Controllers
             if (user == null) return NotFound("User not found.");
 
             var roles = await _userManager.GetRolesAsync(user);
-            bool isAdmin = roles.Contains("Admin"); 
+            bool isAdmin = roles.Contains("Admin");
 
             return Ok(new
             {
                 UserId = user.Id,
                 Email = user.Email,
+                Name = user.UserName ?? user.Email, 
                 IsAdmin = isAdmin
             });
         }
+
 
 
 
