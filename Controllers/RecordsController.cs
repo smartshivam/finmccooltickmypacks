@@ -261,7 +261,6 @@ namespace MyToursApi.Controllers
             DateTime today = DateTime.UtcNow.Date;
 
             var records = await _context.PassengerRecords
-                .Where(r => EF.Property<DateTime>(r, "TourDate").Date == today)
                 .OrderBy(r => r.TourType)
                 .ThenBy(r => r.TourDate)
                 .ToListAsync();
@@ -348,6 +347,22 @@ namespace MyToursApi.Controllers
             {
                 Message = "New passenger created successfully.",
                 PassengerId = newRecord.Id
+            });
+        }
+
+        // POST: api/records/remove
+        [HttpPost("remove")]
+        public async Task<IActionResult> RemovePassenger(int id)
+        {
+            var record = await _context.PassengerRecords.FindAsync(id);
+
+            _context.PassengerRecords.Remove(record);
+            await _context.SaveChangesAsync();
+
+            return Ok(new
+            {
+                Message = "New passenger removed successfully.",
+             
             });
         }
         public class CreatePassengerDto
