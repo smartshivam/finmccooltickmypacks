@@ -9,7 +9,7 @@ using MyToursApi.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Подключение к базе данных
+
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseMySql(
         builder.Configuration.GetConnectionString("DefaultConnection"),
@@ -17,7 +17,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
         mySqlOptions => mySqlOptions.EnableRetryOnFailure()
     ));
 
-// Identity
+//  Identity
 builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
 {
     options.Password.RequireDigit = false;
@@ -41,7 +41,7 @@ builder.Services.AddCors(options =>
     });
 });
 
-// Конфигурация куки для аутентификации
+//  cookies
 builder.Services.ConfigureApplicationCookie(options =>
 {
     options.Cookie.Name = "access_token";
@@ -51,12 +51,13 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.Cookie.SameSite = SameSiteMode.None;
     options.ExpireTimeSpan = TimeSpan.FromDays(7);
 });
+
 builder.Services.Configure<CookiePolicyOptions>(opts =>
 {
     opts.MinimumSameSitePolicy = SameSiteMode.None;
 });
 
-// JWT
+//  JWT
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 var secretKey = jwtSettings["SecretKey"];
 var key = Encoding.ASCII.GetBytes(secretKey);
@@ -68,7 +69,7 @@ builder.Services.AddAuthentication(options =>
 })
 .AddJwtBearer(options =>
 {
-    options.RequireHttpsMetadata = false;
+    options.RequireHttpsMetadata = false; 
     options.TokenValidationParameters = new TokenValidationParameters
     {
         ValidateIssuerSigningKey = true,
@@ -103,7 +104,6 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// Миграция базы данных и создание ролей/админа
 using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
@@ -158,25 +158,20 @@ if (app.Environment.IsDevelopment())
 app.UseDeveloperExceptionPage();
 app.UseHttpsRedirection();
 
-// Применение CORS до остальных middleware
 app.UseCors("AllowFrontend");
-
-// Обработчик OPTIONS preflight запросов – устанавливаем CORS-заголовки и сразу отвечаем
 app.Use(async (context, next) =>
 {
-    if (context.Request.Method.Equals("OPTIONS", StringComparison.OrdinalIgnoreCase))
+    context.Response.OnStarting(() =>
     {
-        context.Response.Headers.Add("Access-Control-Allow-Origin", "https://abkillio.xyz");
-        context.Response.Headers.Add("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-        context.Response.Headers.Add("Access-Control-Allow-Headers", "Content-Type, Authorization");
-        context.Response.Headers.Add("Access-Control-Allow-Credentials", "true");
-        context.Response.StatusCode = 200;
-        await context.Response.CompleteAsync();
-        return;
-    }
+        Console.WriteLine("Response Headers:");
+        foreach (var header in context.Response.Headers)
+        {
+            Console.WriteLine($"{header.Key}: {header.Value}");
+        }
+        return Task.CompletedTask;
+    });
     await next();
 });
-
 app.UseCookiePolicy();
 app.UseAuthentication();
 app.UseAuthorization();
