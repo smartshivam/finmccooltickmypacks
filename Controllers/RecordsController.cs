@@ -4,6 +4,7 @@ using MyToursApi.Data;
 using MyToursApi.Models;
 using ClosedXML.Excel;
 using System.Globalization;
+using DocumentFormat.OpenXml.ExtendedProperties;
 
 namespace MyToursApi.Controllers
 {
@@ -59,6 +60,7 @@ namespace MyToursApi.Controllers
                         string emailAddress = row.Cell(8).GetString();
                         string uniqueReference = row.Cell(9).GetString();
                         string phoneNumber = row.Cell(11).GetString();
+                        string notes = row.Cell(12).GetString();
 
                         if (string.IsNullOrWhiteSpace(tourDateStr))
                             continue;
@@ -85,7 +87,8 @@ namespace MyToursApi.Controllers
                             UniqueReference = uniqueReference,
                             PhoneNumber = phoneNumber,
                             CheckedIn = false,
-                            CheckedInBy = null
+                            CheckedInBy = null,
+                            Notes = notes
                         };
                         _context.PassengerRecords.Add(record);
                         importedRows++;
