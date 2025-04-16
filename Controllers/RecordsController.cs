@@ -83,6 +83,7 @@ namespace MyToursApi.Controllers
                             Surname = surname,
                             FirstName = firstName,
                             Pax = pax,
+                            OriginalPax = pax,
                             EmailAddress = emailAddress,
                             UniqueReference = uniqueReference,
                             PhoneNumber = phoneNumber,
