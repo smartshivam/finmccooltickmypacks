@@ -118,15 +118,17 @@ namespace MyToursApi.Controllers
             if (user == null) return NotFound("User not found.");
 
             var roles = await _userManager.GetRolesAsync(user);
-            bool isAdmin = roles.Contains("Admin"); 
+            bool isAdmin = roles.Contains("Admin");
 
             return Ok(new
             {
                 UserId = user.Id,
                 Email = user.Email,
+                Name = user.UserName ?? user.Email, 
                 IsAdmin = isAdmin
             });
         }
+
 
 
 

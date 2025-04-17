@@ -4,6 +4,7 @@ using MyToursApi.Data;
 using MyToursApi.Models;
 using ClosedXML.Excel;
 using System.Globalization;
+using DocumentFormat.OpenXml.ExtendedProperties;
 
 namespace MyToursApi.Controllers
 {
@@ -59,6 +60,7 @@ namespace MyToursApi.Controllers
                         string emailAddress = row.Cell(8).GetString();
                         string uniqueReference = row.Cell(9).GetString();
                         string phoneNumber = row.Cell(11).GetString();
+                        string notes = row.Cell(12).GetString();
 
                         if (string.IsNullOrWhiteSpace(tourDateStr))
                             continue;
@@ -81,11 +83,13 @@ namespace MyToursApi.Controllers
                             Surname = surname,
                             FirstName = firstName,
                             Pax = pax,
+                            OriginalPax = pax,
                             EmailAddress = emailAddress,
                             UniqueReference = uniqueReference,
                             PhoneNumber = phoneNumber,
                             CheckedIn = false,
-                            CheckedInBy = null
+                            CheckedInBy = null,
+                            Notes = notes
                         };
                         _context.PassengerRecords.Add(record);
                         importedRows++;
@@ -214,10 +218,7 @@ namespace MyToursApi.Controllers
             return Ok(new { message = "Pax updated" });
         }
 
-        public class PaxModel
-        {
-            public int Pax { get; set; }
-        }
+
 
 
         // POST: api/records/checkin-unique
@@ -254,11 +255,143 @@ namespace MyToursApi.Controllers
             });
         }
 
+
+
+
+        // GET: api/records/download-today
+        [HttpGet("download-today")]
+        public async Task<IActionResult> DownloadTodayReport()
+        {
+            DateTime today = DateTime.UtcNow.Date;
+
+            var records = await _context.PassengerRecords
+                .OrderBy(r => r.TourType)
+                .ThenBy(r => r.TourDate)
+                .ToListAsync();
+
+            if (records == null || records.Count == 0)
+            {
+                return NotFound("No records found for today.");
+            }
+
+            using (var workbook = new XLWorkbook())
+            {
+                var worksheet = workbook.Worksheets.Add("Today Report");
+                int row = 1;
+
+                var groups = records
+                    .GroupBy(r => r.TourType)
+                    .OrderBy(g => g.Key);
+
+                foreach (var group in groups)
+                {
+                    int groupPassengers = group.Sum(r => r.Pax);
+                    worksheet.Cell(row, 1).Value = $"{group.Key} ({groupPassengers} passengers)";
+                    worksheet.Range(row, 1, row, 6).Merge().Style.Font.Bold = true;
+                    row++;
+
+                    worksheet.Cell(row, 1).Value = "Tour Date";
+                    worksheet.Cell(row, 2).Value = "Surname";
+                    worksheet.Cell(row, 3).Value = "First Name";
+                    worksheet.Cell(row, 4).Value = "Pax";
+                    worksheet.Cell(row, 5).Value = "Checked";
+                    worksheet.Cell(row, 6).Value = "Guide";
+                    row++;
+
+                    foreach (var record in group)
+                    {
+                        worksheet.Cell(row, 1).Value = record.TourDate.ToString("d", CultureInfo.InvariantCulture);
+                        worksheet.Cell(row, 2).Value = record.Surname;
+                        worksheet.Cell(row, 3).Value = record.FirstName;
+                        worksheet.Cell(row, 4).Value = record.Pax;
+                        worksheet.Cell(row, 5).Value = record.CheckedIn ? "Yes" : "No";
+                        worksheet.Cell(row, 6).Value = record.CheckedInBy;
+                        row++;
+                    }
+                    row++;
+                }
+
+                using (var stream = new MemoryStream())
+                {
+                    workbook.SaveAs(stream);
+                    var content = stream.ToArray();
+                    string fileName = $"TodayReport_{today:yyyyMMdd}.xlsx";
+                    return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+                }
+            }
+        }
+
+        // POST: api/records/create
+        [HttpPost("create")]
+        public async Task<IActionResult> CreatePassenger([FromBody] CreatePassengerDto dto)
+        {
+            if (string.IsNullOrWhiteSpace(dto.TourType))
+                return BadRequest("TourType is required.");
+
+            // creating new passenger record
+            var newRecord = new PassengerRecord
+            {
+                TourDate = dto.TourDate,
+                TourType = dto.TourType,
+                Surname = dto.Surname,
+                FirstName = dto.FirstName,
+                Pax = dto.Pax,
+                Seats = dto.Seats,
+                EmailAddress = dto.EmailAddress,
+                UniqueReference = dto.UniqueReference,
+                PhoneNumber = dto.PhoneNumber,
+                CheckedIn = false,
+                CheckedInBy = null
+            };
+
+            _context.PassengerRecords.Add(newRecord);
+            await _context.SaveChangesAsync();
+
+            return Ok(new
+            {
+                Message = "New passenger created successfully.",
+                PassengerId = newRecord.Id
+            });
+        }
+
+        // POST: api/records/remove
+        [HttpPost("remove")]
+        public async Task<IActionResult> RemovePassenger(int id)
+        {
+            var record = await _context.PassengerRecords.FindAsync(id);
+
+            _context.PassengerRecords.Remove(record);
+            await _context.SaveChangesAsync();
+
+            return Ok(new
+            {
+                Message = "New passenger removed successfully.",
+             
+            });
+        }
+        public class CreatePassengerDto
+        {
+            public DateTime TourDate { get; set; }
+            public string TourType { get; set; }
+            public string Surname { get; set; }
+            public string FirstName { get; set; }
+            public int Pax { get; set; }
+            public string? Seats { get; set; }
+            public string? EmailAddress { get; set; }
+            public string? UniqueReference { get; set; }
+            public string? PhoneNumber { get; set; }
+        }
         public class UniqueRefModel
         {
             public string UniqueRef { get; set; }
-            public string TourType { get; set; } 
+            public string TourType { get; set; }
         }
+
+        public class PaxModel
+        {
+            public int Pax { get; set; }
+        }
+
 
 
     }

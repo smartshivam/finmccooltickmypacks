@@ -15,6 +15,10 @@ namespace MyToursApi.Models
         public string? FirstName { get; set; }
 
         public int Pax { get; set; }
+        public int OriginalPax { get; set; }
+        public string? Notes { get; set; }
+
+
 
         public string? EmailAddress { get; set; }
         public string? UniqueReference { get; set; }
