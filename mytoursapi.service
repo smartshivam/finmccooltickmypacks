@@ -1,0 +1,27 @@
+[Unit]
+Description=MyTours API - Tour Management System
+After=network.target mysql.service
+
+[Service]
+Type=notify
+User=mytoursapi
+Group=mytoursapi
+WorkingDirectory=/opt/mytoursapi
+ExecStart=/usr/bin/dotnet /opt/mytoursapi/MyToursApi.dll
+Restart=always
+RestartSec=10
+KillSignal=SIGINT
+SyslogIdentifier=mytoursapi
+Environment=ASPNETCORE_ENVIRONMENT=Production
+Environment=ASPNETCORE_URLS=http://0.0.0.0:5000
+Environment=DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1
+
+# Security settings
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/mytoursapi
+
+[Install]
+WantedBy=multi-user.target

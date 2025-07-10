@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  db:
+    image: mysql:8.0
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword123
+      MYSQL_DATABASE: mytoursdb
+      MYSQL_USER: finnmcooltours
+      MYSQL_PASSWORD: finnmcooltours
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./mysql-init:/docker-entrypoint-initdb.d
+    ports:
+      - "3306:3306"
+    networks:
+      - mytoursapi-network
+
+  api:
+    build: .
+    restart: always
+    ports:
+      - "80:8080"
+      - "443:8081"
+    depends_on:
+      - db
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=server=db;port=3306;database=mytoursdb;user=finnmcooltours;password=finnmcooltours;
+      - JwtSettings__SecretKey=YourSuperSecretKey123!YourSuperSecretKey123!
+      - AdminCredentials__Email=admin@gmail.com
+      - AdminCredentials__Password=TestPassword
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - mytoursapi-network
+
+  # Optional: Nginx reverse proxy
+  nginx:
+    image: nginx:alpine
+    restart: always
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - api
+    networks:
+      - mytoursapi-network
+
+volumes:
+  mysql_data:
+
+networks:
+  mytoursapi-network:
+    driver: bridge
