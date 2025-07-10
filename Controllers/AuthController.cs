@@ -62,7 +62,7 @@ namespace MyToursApi.Controllers
                 HttpOnly = true,
                 Secure = true,                     
                 SameSite = SameSiteMode.None,      
-                Domain = ".abkillio.xyz",          
+                Domain = ".tickmypax.com",          
                 Expires = DateTime.UtcNow.AddDays(7)
             };
             Response.Cookies.Append("access_token", tokenString, cookieOptions);
@@ -101,7 +101,7 @@ namespace MyToursApi.Controllers
                     HttpOnly = true,
                     Secure = true,
                     SameSite = SameSiteMode.None,
-                    Domain = ".abkillio.xyz",    
+                    Domain = ".tickmypax.com",    
                     Expires = DateTime.UtcNow.AddDays(-1)
                 }
             );
